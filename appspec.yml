@@ -1,0 +1,25 @@
+version: 0.0
+os: linux
+file_exists_behavior: OVERWRITE
+files:
+  - source: version.txt
+    destination: /opt/hello-svc
+  - source: deploy/hello-svc.service
+    destination: /etc/systemd/system
+hooks:
+  ApplicationStop:
+    - location: deploy/stop.sh
+      timeout: 60
+      runas: root
+  AfterInstall:
+    - location: deploy/install.sh
+      timeout: 120
+      runas: root
+  ApplicationStart:
+    - location: deploy/start.sh
+      timeout: 60
+      runas: root
+  ValidateService:
+    - location: deploy/validate.sh
+      timeout: 60
+      runas: root
