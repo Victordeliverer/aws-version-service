@@ -1,0 +1,35 @@
+version: 0.2
+
+env:
+  variables:
+    CA_DOMAIN: gradle-lab
+    CA_REPO: app-releases
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+  pre_build:
+    commands:
+      - chmod +x gradlew
+      - export APP_VERSION="1.0.${CODEBUILD_BUILD_NUMBER}"
+      - export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain $CA_DOMAIN --query authorizationToken --output text)
+      - export CODEARTIFACT_URL=$(aws codeartifact get-repository-endpoint --domain $CA_DOMAIN --repository $CA_REPO --format maven --query repositoryEndpoint --output text)
+  build:
+    commands:
+      - ./gradlew --no-daemon clean test build
+      - ./gradlew --no-daemon publish
+      - echo -n "$APP_VERSION" > version.txt
+
+reports:
+  unit-tests:
+    files:
+      - '*.xml'
+    base-directory: app/build/test-results/test
+    file-format: JUNITXML
+
+artifacts:
+  files:
+    - appspec.yml
+    - version.txt
+    - deploy/**/*
